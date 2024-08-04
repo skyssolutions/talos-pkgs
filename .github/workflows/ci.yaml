@@ -10,6 +10,7 @@ concurrency:
   push:
     branches:
       - main
+      - skylab
       - release-*
     tags:
       - v*
