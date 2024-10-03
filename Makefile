@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2024-09-29T13:39:30Z by kres 8be5fa7.
+# Generated on 2024-10-03T12:33:25Z by kres 34e72ac.
 
 # common variables
 
@@ -13,7 +13,7 @@ IMAGE_TAG ?= $(TAG)
 OPERATING_SYSTEM := $(shell uname -s | tr '[:upper:]' '[:lower:]')
 GOARCH := $(shell uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
 REGISTRY ?= ghcr.io
-USERNAME ?= siderolabs
+USERNAME ?= skyssolutions
 REGISTRY_AND_USERNAME ?= $(REGISTRY)/$(USERNAME)
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
 CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest
@@ -59,7 +59,6 @@ TARGETS += iptables
 TARGETS += ipxe
 TARGETS += kmod
 TARGETS += libaio
-TARGETS += libattr
 TARGETS += libcap
 TARGETS += libinih
 TARGETS += libjson-c
@@ -82,6 +81,7 @@ TARGETS += systemd-udevd
 TARGETS += util-linux
 TARGETS += xfsprogs
 TARGETS += kernel
+TARGETS += kernel-rpi
 TARGETS += drbd-pkg
 TARGETS += gasket-driver-pkg
 TARGETS += nvidia-open-gpu-kernel-modules-lts-pkg
@@ -190,6 +190,13 @@ kernel-%:
 	  docker run --rm -it --entrypoint=/toolchain/bin/bash -e PATH=/toolchain/bin:/bin -w /src -v $$PWD/kernel/build/config-$$arch:/host/.hostconfig $(REGISTRY)/$(USERNAME)/kernel:$(TAG)-$$arch -c 'cp /host/.hostconfig .config && make $* && cp .config /host/.hostconfig'; \
 	done
 
+rpi-kernel-%:
+	for platform in $(shell echo $(PLATFORM) | tr "," " "); do \
+	  arch=`basename $$platform` ; \
+	  $(MAKE) docker-kernel-prepare PLATFORM=$$platform TARGET_ARGS="--tag=$(REGISTRY)/$(USERNAME)/kernel-rpi:$(TAG)-$$arch --load"; \
+	  docker run --rm -it --entrypoint=/toolchain/bin/bash -e PATH=/toolchain/bin:/bin -w /src -v $$PWD/kernel-rpi/build/config-$$arch:/host/.hostconfig $(REGISTRY)/$(USERNAME)/kernel-rpi:$(TAG)-$$arch -c 'cp /host/.hostconfig .config && make $* && cp .config /host/.hostconfig'; \
+    done
+
 .PHONY: rekres
 rekres:
 	@docker pull $(KRES_IMAGE)
@@ -208,3 +215,4 @@ release-notes: $(ARTIFACTS)
 conformance:
 	@docker pull $(CONFORMANCE_IMAGE)
 	@docker run --rm -it -v $(PWD):/src -w /src $(CONFORMANCE_IMAGE) enforce
+
